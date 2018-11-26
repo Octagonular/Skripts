@@ -1,0 +1,476 @@
+# Octagon-SM
+
+#Version 0.4
+
+# Skripted By Octagonular AKA Prismix
+
+# You may edit anything EXCEPT FOR the color theme & branding
+
+options:
+	messaging: true
+# Change this to "false" to disable custom messaging
+	autosaving: true
+# Change this to "false" to disable auto saving by octagon server manager
+# The server still saves it self automatically, periodically
+
+command /c:
+    aliases: /clearchat, /cc, /clearc, /cchat
+    permission: o.c
+    permission message: &e&l* &7You must be &e&lJR.MOD &7or higher to use this command!
+    trigger:
+        loop 100 times:
+            broadcast "&r"
+        wait 1 tick
+        broadcast "&r"
+        broadcast "&e%player% &7cleared the chat."
+        broadcast "&r"
+       
+command /ban [<offlineplayer>] [<text>]:
+    aliases: /b, /banish
+    permission: o.ban
+    permission message: &e&l* &7You must be &e&lMOD &7or higher to use this command!
+    trigger:
+        if arg-1 is set:
+            if arg-2 is set:
+                broadcast "&r"
+                broadcast "&e%player% &7banned &e%arg-1% &7for &c%arg-2% &7[FOREVER]"
+                broadcast "&r"
+                kick arg-1
+                set {banned::%arg-1%} to "true"
+            else:
+                broadcast "&r"
+                broadcast "&e%player% &7banned &e%arg-1% &7for &cNone &7[FOREVER]"
+                broadcast "&r"
+                kick arg-1
+                set {banned::%arg-1%} to "true"
+        else:
+            send "&e&l* &7/ban (player) (reason)"
+           
+on connect:
+    if {banned::%player%} is "true":
+        send "&r"
+        send "&e&l* &7You are banned!"
+        send "&r"
+        kick the player
+           
+command /report [<offlineplayer>] [<text>]:
+    trigger:
+        if arg-1 is set:
+            if arg-2 is set:
+                loop all players:
+                    if loop-player has permission "o.viewreports":
+                        send "&r" to loop-player
+                        send "&e%player% &7reported &e%arg-1% &7for &c%arg-2%" to loop-player
+                        send "&r" to loop-player
+            else:
+                send "&e&l* &7You must include a reason!"
+        else:
+            send "&e&l* &7You must include a player to report!"
+           
+command /warn [<player>] [<text>]:
+    permission: o.warn
+    permission message: &e&l* &7You must be &e&lJR.MOD &7or higher to use this command!
+    trigger:
+        if arg-1 is set:
+            if arg-2 is set:
+                add 1 to {warns::%arg-1%}
+                wait 1 tick
+                broadcast "&r"
+                broadcast "&e%player% &7warned &e%arg-1% &7for &c%arg-2% &7[##%{warns::%arg-1%}%]"
+                broadcast "&r"
+            else:
+                add 1 to {warns::%arg-1%}
+                wait 1 tick
+                broadcast "&r"
+                broadcast "&e%player% &7warned &e%arg-1% &7for &cNone &7[##%{warns::%arg-1%}%]"
+                broadcast "&r"
+        else:
+            send "&e&l* &7/warn (player) (reason)"
+       
+command /unmute [<player>]:
+    permission: o.mute
+    permission message: &e&l* &7You must be &e&lJR.MOD &7or higher to use this command!
+    trigger:
+        broadcast "&r"
+        broadcast "&e%player% &7unmuted &e%arg-1%"
+        broadcast "&r"
+        set {muted::%arg-1%} to "false"
+       
+command /mute [<offlineplayer>] [<text>] [<number>] [<text>]:
+    permission: o.mute
+    permission message: &e&l* &7You must be &e&lJR.MOD &7or higher to use this command!
+    usage: &e&l* &7Correct Usage: &e/mute (player) (minutes/hours) (amount) (reason)
+    trigger:
+        if arg-1 is set:
+            if arg-2 is set:
+                if arg-3 is set:
+                    if arg-4 is set:
+                        if arg-2 is "hours":
+                            set {muted::%arg-1%} to "true"
+                            broadcast "&r"
+                            broadcast "&e%player% &7muted &e%arg-1% &7for &c%arg-4% &7[%arg-3% HOURS]"
+                            broadcast "&r"
+                            set {mutetime::%arg-1%} to (arg-3*3600)
+                        if arg-2 is "minutes":
+                            set {muted::%arg-1%} to "true"
+                            broadcast "&r"
+                            broadcast "&e%player% &7muted &e%arg-1% &7for &c%arg-4% &7[%arg-3% MINUTES]"
+                            broadcast "&r"
+                            set {mutetime::%arg-1%} to (arg-3*60)
+                    else:
+                        send "&e&l* &7/mute (player) (minute/hours) (amount) (reason)"
+                else:
+                    send "&e&l* &7/mute (player) (minute/hours) (amount) (reason)"
+            else:
+                send "&e&l* &7/mute (player) (minute/hours) (amount) (reason)"
+        else:
+            send "&e&l* &7/mute (player) (minute/hours) (amount) (reason)"
+           
+on chat:
+    if {muted::%player%} is "true":
+        cancel event
+        send "&e&l* &7You are muted!" 
+       
+every second:
+	loop all players:
+		if {muted::%loop-player%} is set:
+			if {mutetime::%loop-player%} is equal to 0:
+				set {muted::%loop-player%} to "false"
+			else:
+				remove 1 from {mutetime::%loop-player%}
+           
+command /reset-warns [<offlineplayer>]:
+	permission: o.warn
+	permission message: &e&l* &7You must be &e&lJR.MOD &7or higher to use this command!
+	trigger:
+		if arg-1 is set:
+			set {warns::%arg-1%} to 0
+			send "&e&l* &7You reset the warns of &e%arg-1%"
+		else:
+			send "&e&l* &7You must include a player"
+           
+command /unban [<offlineplayer>]:
+	permission: o.ban
+	permission message: &e&l* &7You must be &e&lMOD &7or higher to use this command!
+	trigger:
+		if arg-1 is set:
+			set {banned::%arg-1%} to "false"
+			broadcast "&r"
+			broadcast "&e%player% &7unbanned &e%arg-1%"
+			broadcast "&r"
+		else:
+			send "&e&l* &7You must include a player!"
+
+command /mutechat:
+	permission: o.mutechat
+	permission message: &e&l* &7You must be &e&lMOD &7or higher to use this command!
+	trigger:
+		set {mutechat} to "true"
+		broadcast ""
+		broadcast "&e%player% &7muted the chat"
+		broadcast ""		
+	
+on chat:
+	if {mutechat} is "true":
+		if player does not have permission "o.chatbypass":
+			cancel event
+			send "&e&l* &7Chat is muted!"
+		
+command /unmutechat:
+	permission: o.mutechat
+	permission message: &e&l* &7You must be &e&lMOD &7or higher to use this command!
+	trigger:
+		set {mutechat} to "false"
+		broadcast ""
+		broadcast "&e%player% &7unmuted the chat"
+		broadcast ""
+		
+command /freeze [<player>]:
+	permission: o.freeze
+	permission message: &e&l* &7You must be &c&lADMIN &7or higher to use this command!
+	trigger:
+		if arg-1 is set:
+			set {frozen::%arg-1%} to "true"
+			send "&e&l* &7You have been frozen!" to arg-1
+			send "&e&l* &7You froze &e%arg-1%&7!"
+		else:
+			send "&e&l* &7You must include a player to freeze!"
+			
+command /unfreeze [<player>]:
+	permission: o.freeze
+	permission message: &e&l* &7You must be &c&lADMIN &7or higher to use this command!
+	trigger:
+		if arg-1 is set:
+			if {frozen::%arg-1%} is "true":
+				set {frozen::%arg-1%} to "false"
+				send "&e&l* &7You have been unfrozen!" to arg-1
+				send "&e&l* &7You unfroze &e%arg-1%&7!"
+			else:
+				send "&e&l* &7That player isn't frozen."
+		else:
+			send "&e&l* &7You must include a player to unfreeze!"
+			
+on any movement:
+	if {frozen::%player%} is "true":
+		cancel event
+		send "&e&l* &7You are frozen!"	
+		
+command /push [<player>]:
+	permission: o.push
+	permission message: &e&l* &7You must be &c&lADMIN &7or higher to use this command!"
+	trigger:
+		if arg-1 is set:
+			send "&e&l* &7You have been pushed!" to arg-1
+			send "&e&l* &7You pushed &e%arg-1%"
+			set {_r} to a random integer between 1 and 3
+			if {_r} is equal to 1:
+				push arg-1 upwards at speed 10
+			if {_r} is equal to 2:
+				push arg-1 left at speed 10
+			if {_r} is equal to 3:
+				push arg-1 right at speed 10
+		else:
+			send "&e&l* &7You must include a player to trap!"
+		
+# Player Commands
+
+command /msg [<player>] [<text>]:
+	trigger:
+		if {@messaging} is true:
+			if arg-1 and arg-2 is set:
+				if {muted::%player%} is "true":
+					send "&e&l* &7You are muted!"
+				else:
+					send "&e[From: %player%] &7%arg-2%" to arg-1
+					send "&e[To: %arg-1%] &7%arg-2%"
+					set {lastmsg::%player%} to arg-1
+					set {lastmsg::%arg-1%} to player
+			else:
+				send "&e&l* &7Correct Usage: &e/msg (player) (message)"
+			
+command /r [<text>]:
+	trigger:
+		if {@messaging} is true:
+			if arg-1 is set:
+				if {muted::%player%} is "true":
+					send "&e&l* &7You are muted!"
+				else:
+					if {lastmsg::%player%} is set:
+						send "&e[From: %player%] &7%arg-1%" to {lastmsg::%player%}
+						send "&e[To: %{lastmsg::%player%}%] &7%arg-1%"
+					else:
+						send "&e&l* &7Nobody has messaged you!"
+			else:
+				send "&e&l* &7Correct Usage: &e/r (message)"
+			
+on join:
+	clear {lastmsg::%player%}
+	
+command /tp [<player>]:
+	aliases: /teleport
+	permission: o.tp
+	permission message: &e&l* &7You must be &c&lADMIN &7or higher to use this command!
+	trigger:
+		if arg-1 is set:
+			set {_loc} to location of arg-1
+			teleport player to {_loc}
+			send "&e&l* &7Teleporting you to &e%arg-1%&7..."
+		else:
+			send "&e&l* &7You must include a player to teleport to!"
+			
+command /tpa [<player>]:
+	permission: o.tpa
+	permission message: &e&l* &7You don't have the required permissions for this command!
+	trigger:
+		if arg-1 is set:
+			if {tpa::%player%} is "true":
+				send "&e&l* &7You have an active teleport request, wait for your current one to expire."
+			else:
+				set {tpa::%arg-1%} to "true"
+				set {tpa::%player%} to "true"
+				set {tpa-player::%arg-1%} to "%player%"
+				set {tpa-player::%player%} to "%arg-1%"
+				send "&e&l* &7You requested to teleport to &e%arg-1% &7(&e/tpacancel &7to cancel) Expires in 30 seconds..."
+				send "&e&l* &e%player% &7has requested to teleport to you. (&e/tpaccept &7to accept) Expires in 30 seconds..." to arg-1
+				wait 30 seconds
+				clear {tpa::%{tpa-player::%player%}%}
+				clear {tpa-player::%{tpa-player::%player%}%}
+				clear {tpa::%player%}
+				clear {tpa-player::%player%}
+		else:
+			send "&e&l* &7You must include a player to teleport to!"
+			
+command /tpacancel:
+	permission: o.tpa
+	permission message: &e&l* &7You don't have the required permissions for this command!
+	trigger:
+		if {tpa::%player%} is "true":
+			send "&e&l* &7You cancelled your teleport request."
+			send "&e&l* &e%player% &7cancelled their teleport request to you." to {tpa-player::%player%}
+			clear {tpa::%{tpa-player::%player%}%}
+			clear {tpa-player::%{tpa-player::%player%}%}
+			clear {tpa::%player%}
+			clear {tpa-player::%player%}
+		else:
+			send "&e&l* &7You have not requested to teleport to anyone."
+			
+command /tpaccept:
+	permission: o.tpa
+	permission message: &e&l* &7You don't have the required permissions for this command!
+	trigger:
+		if {tpa::%player%} is "true":
+			execute command "/minecraft:tp %{tpa-player::%player%}% %player%"
+			send "&e&l* &7Teleporting &e%{tpa-player::%player%}% &7to you..."
+			execute command "/tellraw %{tpa-player::%player%}% ["""",{""text"":""*"",""bold"":true,""color"":""yellow""},{""text"":"" ""},{""text"":""Teleporting to"",""color"":""gray""},{""text"":"" ""},{""text"":""%{tpa-player::%{tpa-player::%player%}%}%"",""color"":""yellow""},{""text"":""..."",""color"":""gray""}]"
+			clear {tpa::%{tpa-player::%player%}%}
+			clear {tpa-player::%{tpa-player::%player%}%}
+			clear {tpa::%player%}
+			clear {tpa-player::%player%}
+		else:
+			send "&e&l* &7No one has requested to teleport to you."
+	
+command /sethome:
+	permission: o.home
+	permission message: &e&l* &7You don't have the required permissions to use this command!
+	trigger:
+		set {home::%player%} to location of player
+		send "&e&l* &7Home set."
+
+command /home:
+	permission: o.home
+	trigger:
+		if {home::%player%} is set:
+			send "&e&l* &7Teleporting you to your home..."
+			wait 3 seconds
+			teleport player to {home::%player%}
+		else:
+			send "&e&l* &7You don't have a home set!"
+
+# Server // Administration
+	
+every 10 minutes:
+	if {@autosaving} is true:
+		broadcast ""
+		broadcast "&e&lOCTAGON: &7&oSaving world..."
+		broadcast ""
+		execute command "/save-all"
+		wait 2 seconds
+		broadcast ""
+		broadcast "&e&lOCTAGON: &7&oWorld saved."
+		broadcast ""
+	else:
+		send "OSM >> Autosaving is disabled, so the server was not saved automatically." to console
+	
+command /save:
+	permission: o.save
+	permission message: &e&l* &7You must be &c&lADMIN &7or higher to use this command!
+	trigger:
+		execute command "/save-all"
+		send "&e&l* &7World saved."
+		
+command /rank [<player>] [<text>]:
+	permission: o.rank
+	permission message: &e&l* &7You must be &c&lADMIN &7or higher to use this command!
+	trigger:
+		if arg-1 and arg-2 is set:
+			if arg-2 is "default":
+				execute command "/manuadd %arg-1% default"
+				broadcast "&e%player% &7changed &e%arg-1%&7's rank to &7Default"
+			if arg-2 is "JrMod":
+				execute command "/manuadd %arg-1% JrMod"
+				broadcast "&e%player% &7changed &e%arg-1%&7's rank to &eJr.Mod"
+			if arg-2 is "Mod":
+				execute command "/manuadd %arg-1% Mod"
+				broadcast "&e%player% &7changed &e%arg-1%&7's rank to &eMod"
+			if arg-2 is "SrMod":
+				execute command "/manuadd %arg-1% SrMod"
+				broadcast "&e%player% &7changed &e%arg-1%&7's rank to &eSr.Mod"
+			if arg-2 is "Admin":
+				execute command "/manuadd %arg-1% Admin"
+				broadcast "&e%player% &7changed &e%arg-1%&7's rank to &cAdmin"
+		else:
+			send "&e&l* &7Correct Usage: &e/rank (player) (rank)"
+			send "&e&l* &7Valid Ranks: &7Default, &eJrMod&7, &eMod&7, &eSrMod&7, &cAdmin"
+			
+command /whitelist [<text>] [<offlineplayer>]:
+	aliases: /wl
+	permission: o.whitelist
+	permission message: &e&l* &7You must be &c&lADMIN &7or higher to use this command!
+	trigger:
+		if arg-1 is set:
+			if arg-1 is "add":
+				if arg-2 is set:
+					if {whitelisted::*} contains "%arg-2%":
+						send "&e&l* &7That player is already whitelisted!"
+					else:
+						add arg-2 to {whitelisted::*}
+						send "&e&l* &e%arg-2% &7is now whitelisted."
+				else:
+					send "&e&l* &7You must include a player!"
+			if arg-1 is "remove":
+				if arg-2 is set:
+					if {whitelisted::*} contains "%arg-2%":
+						clear {whitelisted::%arg-2%}
+						send "&e&l* &e%arg-2% &7is no longer whitelisted."
+					else:
+						send "&e&l* &7That player is not whitelisted!"
+				else:
+					send "&e&l* &7You must include a player!"
+			if arg-1 is "on":
+				send "&e&l* &7The whitelist is now &a&lON&7."
+				set {whitelist} to "true"
+			if arg-1 is "off":
+				send "&e&l* &7The whitelist is now &c&lOFF&7."
+				set {whitelist} to "false"
+			if arg-1 is "check":
+				if arg-2 is set: 
+					if {whitelisted::*} contains "%arg-2%":
+						send "&e&l* &7That player &a&lIS &7whitelisted."
+					else:
+						send "&e&l* &7That player is &c&lNOT &7whitelisted."
+				else:
+					send "&e&l* &7You must include a player!"
+			if arg-1 is "list":
+				send "&e&l* &7The following players on are on the whitelist; &e%{whitelisted::*}%"
+			if arg-1 is "clear":
+				send "&e&l* &7The whitelist has been cleared."
+				clear {whitelist}
+				clear {whitelisted::*}
+		else:
+			send "&e&l* &7Correct Usage: &e/whitelist (add/remove/on/off/check/list/clear) (player)"
+			
+on join:
+	if {whitelist} is "true":
+		if {whitelisted::*} does not contain "%player%":
+			send ""
+			send "&e&l* &7You are not whitelisted!"
+			send ""
+			wait 1 tick
+			kick the player
+			broadcast "&e&lOCTAGON: &e%player% &7tried to join, but is not whitelisted"	
+	
+# Other	
+	
+command /1 [<player>]:
+	aliases: /gmc, /gc
+	permission: admin
+	permission message: &e&l* &7You must be &c&lADMIN &7or higher to use this command!
+	trigger:
+		if arg-1 is set:
+			execute command "/gamemode creative %arg-1%"
+			send "&e&l* &7Gamemode changed to &ecreative &7for &e%arg-1%"
+		else:
+			execute command "/gamemode creative %player%"
+			send "&e&l* &7Gamemode changed to &ecreative"
+			
+command /2 [<player>]:
+	aliases: /gms, /gs
+	permission: admin
+	permission message: &e&l* &7You must be &c&lADMIN &7or higher to use this command!
+	trigger:
+		if arg-1 is set:
+			execute command "/gamemode survival %arg-1%"
+			send "&e&l* &7Gamemode changed to &esurvival &7for &e%arg-1%"
+		else:
+			execute command "/gamemode survival %player%"
+			send "&e&l* &7Gamemode changed to &esurvival"			
